@@ -735,14 +735,6 @@ task.spawn(function()
                 CraftItem:InvokeServer("Crafting Bench 3")
                 wait(1)
                 CraftItem:InvokeServer("Good Bed")
-                local rx = math.random(1,10)
-                local rz = math.random(1,10)
-
-                local t_rx = math.random(10,20)
-                local t_rz = math.random(10,20)
-
-                local w_rx = math.random(20,30)
-                local w_rz = math.random(20,30)
 
                 RequestPlaceStructure:InvokeServer(
                     lp.Inventory["Old Bed Blueprint"],
