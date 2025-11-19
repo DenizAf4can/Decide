@@ -1,0 +1,791 @@
+local MacLib = loadstring(game:HttpGet("https://github.com/biggaboy212/Maclib/releases/latest/download/maclib.txt"))()
+-- GAY PORN.
+-- Services
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TweenService  = game:GetService("TweenService")
+
+-- Variables
+local campfire = {Level1 = 75, Level2 = 160, Level3 = 693, Level4 = 2240, Level5 = 3500}
+local lp = game.Players.LocalPlayer
+local char = lp.Character
+
+local ItemList = {"Log","Coal","Fuel","Fuel Canister","Chair","Oil Barrel","Berry","Steak","Apple","Cake","Morsel","Cooked Morsel","Cooked Steak","Washing Machine","Broken Microwave","Old Car Engine","Tyre","Bolt","Sheet Metal","Bandage","Medkit","Wolf Pelt","Good Sack","Good Axe","Laser Fence Blueprint","Leather Body","Iron Body","Thorn Body","Alpha Wolf Pelt","Anvil Front","Anvil Back","Bunny Foot","Raygun","Giant Sack","Strong Axe","Rifle","Rifle Ammo","Revolver","Revolver Ammo","Sapling","Gem of the Forest Fragment","Old Axe","Strong Flashlight","Old Flashlight","Chainsaw","Infernal Sack","Old Sack","Cultist Gem","Forest Gem","Meteor Shard","Gold Shard","Obsidiron Ingot","Scalding Obsidiron Ingot","Raw Obsidiron Ore","Raw Obsidiron Ore (Shard)","Axe Trim Kit","Armor Trim Kit","Obsidiron Chest Blueprint","Obsidiron Hammer","Obsidiron Body","Obsidiron Boots","Cultist Staff","Old Taming Flute","Good Taming Flute","Strong Taming Flute","Infernal Helmet","Cultist King Antler","Cultist King Mace","Infernal Crossbow","Crossbow","Wildfire","Lava Eel","Lionfish","Mackerel","Salmon","Clownfish","Jellyfish","Char","Eel","Swordfish","Shark","Trident","Flamethrower","Poison Spear","Blowpipe","Admin Gun","Poison Armor","Frog Boots","Frog Key","Old Rod","Good Rod","Strong Rod","Ribs","Ice Sword","Snowball","Frozen Shuriken","Warm Earmuffs","Warm Beanie","Arctic Fox Hat","Polar Bear Hat","Arctic Fox Pelt","Polar Bear Pelt","Mammoth Tusk","Watering Can","Pumpkin","Corn","Meat Sandwich","Laser Sword","Laser Cannon","Alien Armor","Alien Corpse","UFO Junk","UFO Component","UFO Scrap","Hammer","Mossy Coin","Bear Trap","Morningstar","Tactical Shotgun","Shotgun Ammo","Riot Shield","Cultist Corpse","Cultist Experiment","Cultist Prototype","Passive Seasoning","Katana","Kunai","Basketball","Red Key","Blue Key","Yellow Key","Grey Key","Carrot","Chili","Cooked Stew","Hearty Stew","Chili Seeds","Flower Seeds","Berry Seeds","Firefly Seeds","Spear","Biofuel","Wood","Scrap","Flower","Diamond","Old Boot","Defense Blueprint","Warm Mammoth Helmet","Feather","Ice Axe","Crafting Blueprint","Carrot Cake","Pumpkin Soup","Steak Dinner","Seafood Chowder","Jar o' Jelly","Recipe Book","Chef's Station Blueprint","Paint Brush","Furniture Blueprint","Support Notes"}
+
+local OldAxe = lp.Inventory["Old Axe"]
+local Campfire = workspace.Map.Campground.MainFire
+local CraftingBench = workspace.Map.Campground.CraftingBench
+
+local Settings = {
+    Dayfarm = false,
+
+    AutoCutTree = false,
+    TreeAura = false,
+    TreeAuraRadius = 100,
+
+    AutoCampfire = false,
+    ConvertScrap = false,
+
+    Killaura = false,
+    KillauraRadius = 100,
+
+    AutoKillRaid = false,
+}
+
+--- Remotes
+
+local StopDraggingItem = ReplicatedStorage.RemoteEvents.StopDraggingItem
+local RequestStartDraggingItem = ReplicatedStorage.RemoteEvents.RequestStartDraggingItem
+local ToolDamageObject = ReplicatedStorage.RemoteEvents.ToolDamageObject
+local RequestConsumeItem = ReplicatedStorage.RemoteEvents.RequestConsumeItem
+local CraftItem = ReplicatedStorage.RemoteEvents.CraftItem
+local RequestPlantItem = ReplicatedStorage.RemoteEvents.RequestPlantItem
+local RequestCollectCoints = ReplicatedStorage.RemoteEvents.RequestCollectCoints
+local RequestBurnItem = ReplicatedStorage.RemoteEvents.RequestBurnItem
+local RequestBagStoreItem = ReplicatedStorage.RemoteEvents.RequestBagStoreItem
+local EquipItemHandle = ReplicatedStorage.RemoteEvents.EquipItemHandle
+local RequestScrapItem = ReplicatedStorage.RemoteEvents.RequestScrapItem
+local RequestBagDropItem = ReplicatedStorage.RemoteEvents.RequestBagDropItem
+local RequestPlaceStructure = ReplicatedStorage.RemoteEvents.RequestPlaceStructure
+
+RequestConsumeItem:InvokeServer(
+    Carrot
+)
+
+RequestCollectCoints:InvokeServer(
+    CoinStack
+)
+
+
+-- Functions
+
+local function noclip()
+    for i, v in pairs(lp.Character:GetDescendants()) do
+        if v:IsA("BasePart") and v.CanCollide == true then
+            v.CanCollide = false
+            lp.Character.HumanoidRootPart.Velocity = Vector3.new(0,0,0)
+        end
+    end
+end
+
+local currentMoveTween = nil
+
+function moveto(destinationCFrame, speed)
+    if currentMoveTween and currentMoveTween.PlaybackState == Enum.PlaybackState.Playing then
+        currentMoveTween:Cancel()
+    end
+
+    local rootPart = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
+    if not rootPart then return end
+
+    local distance = (rootPart.Position - destinationCFrame.Position).Magnitude
+    local travelTime = distance / speed
+
+    local info = TweenInfo.new(travelTime, Enum.EasingStyle.Linear)
+    currentMoveTween = TweenService:Create(rootPart, info, {CFrame = destinationCFrame})
+
+    local noclipConnection
+    local antiFallVelocity = Instance.new("BodyVelocity", rootPart)
+    antiFallVelocity.MaxForce = Vector3.new(0, math.huge, 0)
+    antiFallVelocity.Velocity = Vector3.new(0, 0, 0)
+    
+    noclipConnection = game:GetService("RunService").Stepped:Connect(noclip)
+    
+    currentMoveTween:Play()
+
+    currentMoveTween.Completed:Connect(function()
+        if noclipConnection then
+            noclipConnection:Disconnect()
+        end
+        if antiFallVelocity then
+            antiFallVelocity:Destroy()
+        end
+        currentMoveTween = nil
+    end)
+
+    return currentMoveTween
+end
+
+function rwait(destinationCFrame)
+    if not lp.Character then
+        lp.CharacterAdded:Wait()
+    end
+    local rootPart = lp.Character:WaitForChild("HumanoidRootPart")
+    local humanoid = lp.Character:WaitForChild("Humanoid")
+
+    if (rootPart.CFrame.Position - destinationCFrame.Position).Magnitude < 8 then
+        return
+    end
+
+    local movementTween = moveto(destinationCFrame, 90)
+
+    if movementTween then
+        while movementTween.PlaybackState == Enum.PlaybackState.Playing and humanoid.Health > 0 do
+            wait()
+        end
+
+        if humanoid.Health <= 0 and movementTween then
+            movementTween:Cancel()
+        end
+    end
+end
+
+
+
+local dongubt = true
+local TreesToCut = {[""] = true}
+function cutTrees(method)
+    if method == "Normal" then
+        local srt = 0
+        dongubt = false
+        for i,v in pairs(workspace.Map.Foliage:GetChildren()) do
+            if v and v.PrimaryPart and char and char.PrimaryPart then
+                if TreesToCut[v.Name] then
+                    print("Found tree!")
+                    rwait(CFrame.new(v.PrimaryPart.CFrame.Position + Vector3.new(0, 5, 0)))
+                    repeat
+                        wait(0.036)
+                        local owner  = math.random(500000,100000000)
+                        OldAxe:SetAttribute("Owner", owner)
+                        ToolDamageObject:InvokeServer(
+                            v,
+                            OldAxe,
+                            "0_"..owner,
+                            char.PrimaryPart.CFrame
+                        )
+                        srt = srt + 1
+                        if not Settings.AutoCutTree then dongubt = true return end
+                    until srt == 50 or not Settings.AutoCutTree
+                    srt = 0
+                end
+            end
+        end
+        dongubt = true
+        return
+    elseif method == "Aura" then
+        local fq = 0
+        repeat wait(0.1)
+            for i,v in pairs(workspace.Map.Foliage:GetChildren()) do
+                if v and v.PrimaryPart and char and char.PrimaryPart then
+                    if TreesToCut[v.Name] and (v.PrimaryPart.Position - lp.Character.PrimaryPart.CFrame.Position).Magnitude <= Settings.TreeAuraRadius  then
+                        print("Found tree!")
+                        local owner  = math.random(500000,100000000)
+                        OldAxe:SetAttribute("Owner", owner)
+                        ToolDamageObject:InvokeServer(
+                            v,
+                            OldAxe,
+                            "0_"..owner,
+                            char.PrimaryPart.CFrame
+                        )
+                        if not Settings.TreeAura then return end
+                    end
+                end
+            end
+            for i,v in pairs(workspace.Map.Landmarks:GetChildren()) do
+                if v and v.PrimaryPart and char and char.PrimaryPart then
+                    if TreesToCut[v.Name] and (v.PrimaryPart.Position - lp.Character.PrimaryPart.CFrame.Position).Magnitude < Settings.TreeAuraRadius  then
+                        local owner  = math.random(500000,100000000)
+                        OldAxe:SetAttribute("Owner", owner)
+                        ToolDamageObject:InvokeServer(
+                            v,
+                            OldAxe,
+                            "0_"..owner,
+                            char.PrimaryPart.CFrame
+                        )
+                        if not Settings.TreeAura then return end
+                    end
+                end
+            end
+            fq = fq + 1
+        until fq == 60 or not Settings.TreeAura
+    end
+end
+
+function AreRaidEnemiesAlive()
+    for _, child in pairs(workspace.Characters:GetChildren()) do
+        if child.Name == "Cultist" or child.Name == "Crossbow Cultist" and child.PrimaryPart then
+            if (child.PrimaryPart.Position - Campfire.PrimaryPart.Position).Magnitude < 120 then
+                return true
+            end
+        end
+    end
+    return false
+end
+
+function killMobs(method, name)
+    if method == "Aura" and type(name) == "string" then
+        for i,v in pairs(workspace.Characters:GetChildren()) do
+            if v and v.PrimaryPart and char and char.PrimaryPart then
+                if v.Name == name and (v.PrimaryPart.Position - char.PrimaryPart.Position).Magnitude <= Settings.KillauraRadius then
+                    local owner  = math.random(500000,100000000)
+                    OldAxe:SetAttribute("Owner", owner)
+                    ToolDamageObject:InvokeServer(
+                        v,
+                        OldAxe,
+                        "0_"..owner,
+                        char.PrimaryPart.CFrame
+                    )
+                end
+            end
+        end
+    elseif method == "Aura" and type(name) == "table" then
+        for i,v in pairs(workspace.Characters:GetChildren()) do
+            if v and v.PrimaryPart and char and char.PrimaryPart then
+                if name[v.Name] and (v.PrimaryPart.Position - char.PrimaryPart.Position).Magnitude  then
+                    local owner  = math.random(500000,100000000)
+                    OldAxe:SetAttribute("Owner", owner)
+                    ToolDamageObject:InvokeServer(
+                        v,
+                        OldAxe,
+                        "0_"..owner,
+                        char.PrimaryPart.CFrame
+                    )
+                end
+            end
+        end
+    elseif method == "Follow-Aura" and type(name) == "table" then
+        for i,v in pairs(workspace.Characters:GetChildren()) do
+            if v and v.PrimaryPart and char and char.PrimaryPart then
+                if name[v.Name] and (v.PrimaryPart.Position - Campfire.PrimaryPart.Position).Magnitude < 120 then
+                    rwait(v.PrimaryPart.CFrame)
+                    local owner  = math.random(500000,100000000)
+                    OldAxe:SetAttribute("Owner", owner)
+                    local qwr = 0
+                    repeat
+                        wait(0.1)
+                        ToolDamageObject:InvokeServer(
+                            v,
+                            OldAxe,
+                            "0_"..owner,
+                            char.PrimaryPart.CFrame
+                        )
+                        qwr = qwr + 1
+                    until qwr == 3
+                end
+            end
+        end
+    end
+end
+
+-- Library
+
+local Window = MacLib:Window({
+    Title = "Decide | 99 Nights",
+    Subtitle = "Free | v1",
+    Size = UDim2.fromOffset(800, 600),
+    DragStyle = 2,
+    DisabledWindowControls = {},
+    ShowUserInfo = true,
+    Keybind = Enum.KeyCode.RightControl,
+    AcrylicBlur = true,
+})
+local TabGroup = Window:TabGroup()
+
+Window:Notify({
+    Title = "Decide",
+    Description = "Loaded!",
+    Lifetime = 5
+})
+
+local T1 = TabGroup:Tab({Name = "Main", Image = ""})
+
+local T1_Left = T1:Section({Side = "Left"})
+local T1_Right = T1:Section({Side = "Right"})
+local T1_Left_2 = T1:Section({Side = "Left"})
+local T1_Right_2 = T1:Section({Side = "Right"})
+
+-- T1 Left
+
+T1_Left:Label({Text = "Bring Items"})
+T1_Left:Button({Name = "Bring all", Callback = function()
+    for i,v in pairs(workspace.Items:GetChildren()) do
+        if v and v.PrimaryPart and char and char.PrimaryPart then
+            RequestStartDraggingItem:FireServer(
+                v
+            )
+            v.PrimaryPart.CFrame = char:GetPrimaryPartCFrame()
+            StopDraggingItem:FireServer(
+                v
+            )
+        end
+    end
+end})
+
+
+local ItemsToBring = {""}
+T1_Left:Dropdown({Name = "Select Item(s) to bring", Search = true, Multi = true, Required = true, Options = ItemList, Callback = function(val)
+    ItemsToBring = val
+    for i,v in pairs(val) do
+        print(i,v)
+    end
+end})
+
+T1_Left:Button({Name = "Bring selected Items", Callback = function()
+    for i,v in pairs(workspace.Items:GetChildren()) do
+        for _, itemid in pairs(ItemsToBring) do
+            if v.Name == _ then
+                RequestStartDraggingItem:FireServer(
+                    v
+                )
+                v.PrimaryPart.CFrame = char:GetPrimaryPartCFrame()
+                StopDraggingItem:FireServer(
+                    v
+                )
+            end
+        end
+    end
+end})
+
+T1_Left:Button({Name = "God Mode", Callback = function()
+    ReplicatedStorage.RemoteEvents.DamagePlayer:FireServer(-math.huge)
+end})
+
+-- T1 Right
+T1_Right:Label({Text = "Cut Tree(s)"})
+T1_Right:Dropdown({Name = "Select Tree(s)", Search = true, Multi = true, Required = true, Options = {"Small Tree", "Snowy Small Tree", "Small Webbed Tree", "TreeBig1", "WebbedTreeBig1", "TreeBig2", "WebbedTreeBig2", "TreeBig3", "WebbedTreeBig3"}, Callback = function(val)
+    TreesToCut = val
+    for i,v in pairs(val) do
+        print(i,v)
+    end
+end})
+
+T1_Right:Toggle({Name = "Cut selected tree(s)", Default = false, Callback = function(val) 
+    Settings.AutoCutTree = val
+end})
+
+T1_Right:Toggle({Name = "Tree Aura", Default = false, Callback = function(val) 
+    Settings.TreeAura = val
+end})
+local campfire_conn
+local oldpos
+T1_Right:Toggle({Name = "Auto feed campfire", Default = false, Callback = function(val) 
+    Settings.AutoCampfire = val
+end})
+
+local sap_conn
+T1_Right:Toggle({Name = "Auto plant saplings", Default = false, Callback = function(val) 
+    if val then
+        sap_conn = workspace.Items.ChildAdded:Connect(function(item)
+            wait(1)
+            if item.Name == "Sapling" and item.PrimaryPart then
+                RequestPlantItem:InvokeServer(
+                    item,
+                    item.PrimaryPart.Position
+                )
+            end
+        end)
+    else
+        sap_conn:Disconnect()
+        sap_conn = nil
+    end
+end})
+
+T1_Right:Slider({Name = "Tree Aura Range", Default = 100, Minimum = 20, Maximum = 100, DisplayMethod = "Value", Precision = 1, Callback = function(val)
+    Settings.TreeAuraRadius = val    
+end})
+
+T1_Right:Toggle({Name = "Auto convert scrap (include log)", Default = false, Callback = function(val) 
+    Settings.ConvertScrap = val
+end})
+
+-- T1 Left 2 
+T1_Left_2:Label({Name = "Day Farming"})
+T1_Left_2:Toggle({Name = "Day Farm", Default = false, Callback = function(val)
+    Settings.Dayfarm = val
+end})
+
+-- T1 Right 2
+T1_Right_2:Label({Text = "Mob Settings"})
+T1_Right_2:Toggle({Name = "Use Killaura", Default = false, Callback = function(val) 
+    Settings.Killaura = val
+end})
+
+T1_Right_2:Slider({Name = "Killaura Range", Default = 100, Minimum = 20, Maximum = 100, DisplayMethod = "Value", Precision = 1, Callback = function(val)
+    Settings.KillauraRadius = val    
+end})
+
+T1_Right_2:Toggle({Name = "Auto Kill Raid", Default = false, Callback = function(val) 
+    Settings.AutoKillRaid = val
+end})
+
+-- Task Spawn
+
+task.spawn(function()
+    while true do wait(2)
+        if Settings.AutoCampfire then
+            if campfire_conn == nil then
+                campfire_conn = workspace.Items.ChildAdded:Connect(function(item)
+                wait(0.2)
+                if item.Name == "Log" and item.PrimaryPart then
+                    if item.PrimaryPart.Color == Color3.fromRGB(135, 114, 99) then
+                        RequestStartDraggingItem:FireServer(
+                            item
+                        )
+                        item.PrimaryPart.CFrame = CFrame.new(Campfire.PrimaryPart.Position + Vector3.new(math.random(5,8), 0, math.random(5,8)))
+                        StopDraggingItem:FireServer(
+                            item
+                        )
+                        wait(0.2)
+                        RequestBurnItem:FireServer(
+                            Campfire,
+                            item
+                        )
+                    end
+                end
+            end)
+            end
+        else
+            if campfire_conn ~= nil then
+                campfire_conn:Disconnect()
+            end
+            campfire_conn = nil
+        end
+    end
+end)
+
+task.spawn(function()
+    while true do wait(2)
+        if Settings.AutoCutTree and dongubt then
+            cutTrees("Normal")
+        end
+    end
+end)
+
+task.spawn(function()
+    while true do wait(0.2)
+        if Settings.TreeAura then
+            cutTrees("Aura")
+        end
+    end
+end)
+
+task.spawn(function()
+    while true do wait(0.3)
+        if Settings.Killaura then
+            killMobs("Aura", {["Cultist"] = true, ["Crossbow Cultist"] = true, ["Frog"] = true, ["Wolf"] = true})
+        end
+    end
+end)
+
+task.spawn(function()
+    while true do wait(4)
+        if Settings.AutoKillRaid then
+            if AreRaidEnemiesAlive() then
+                local sayi = 0
+                for i,v in pairs(workspace.Characters:GetChildren()) do
+                    if v and v.PrimaryPart and char and char.PrimaryPart then
+                        if (v.PrimaryPart.Position - Campfire.PrimaryPart.Position).Magnitude < 70 then
+                            sayi = sayi + 1
+                        end
+                    end
+                end
+                if sayi ~= 0 then
+                    local t = time()
+                    local t2 = time()
+                    local sir = false
+                    local vsr = false
+                    if Settings.AutoCutTree then
+                        Settings.AutoCutTree = false
+                        vsr = true
+                    end
+                    Window:Notify({
+                        Title = "Decide",
+                        Description = "Turned off auto cutting trees until winning raid",
+                        Lifetime = 5
+                    })
+                    if char and char.PrimaryPart then
+                        rwait(CFrame.new(Campfire.PrimaryPart.Position + Vector3.new(0, 20, 0), Vector3.new(0,0,0)))
+                    end
+                    repeat
+                        wait(0.3)
+                        t2 = time()
+                        killMobs("Aura", {["Cultist"] = true, ["Crossbow Cultist"] = true})
+                        if (t2 - t) > 80 then
+                            Window:Notify({
+                                Title = "Decide",
+                                Description = "Stuck in the raid. Activating teleport system",
+                                Lifetime = 5
+                            })
+                            sir = true
+                            break
+                        end
+                    until not workspace.Characters:FindFirstChild("Cultist") and not workspace.Characters:FindFirstChild("Crossbow Cultist")
+                    
+                    if sir then
+                        local lilith = true
+                        repeat
+                            wait(0.3)
+                            killMobs("Follow-Aura", {["Cultist"] = true, ["Crossbow Cultist"] = true})
+                            lilith = AreRaidEnemiesAlive()
+                        until workspace.Characters:FindFirstChild("Cultist") == nil and workspace.Characters:FindFirstChild("Crossbow Cultist") == nil and lilith == false
+                    end
+
+                    Window:Notify({
+                        Title = "Decide",
+                        Description = "Cleared the raid!",
+                        Lifetime = 5
+                    })
+                    if vsr then
+                        Settings.AutoCutTree = true
+                    end
+                end
+            end
+        end
+    end
+end)
+local ScrapList = {
+    ["Log"] = true,
+    ["Washing Machine"] = true,
+    ["Broken Microwave"] = true,
+    ["Old Car Engine"] = true,
+    ["Tyre"] = true,
+    ["Bolt"] = true,
+    ["Sheet Metal"] = true,
+    ["Cultist Gem"] = true,
+    ["Scrap"] = true,
+    ["Broken Fan"] = true,
+    ["Old Radio"] = true,
+}
+task.spawn(function()
+    while true do wait(1)
+        if Settings.ConvertScrap then
+            for i,v in pairs(workspace.Items:GetChildren()) do
+                if ScrapList[v.Name] then
+
+                    RequestStartDraggingItem:FireServer(
+                        v
+                    )
+                    v.PrimaryPart.CFrame = CFrame.new(workspace.Map.Campground.CraftingBench.Hammer.Position)
+                    StopDraggingItem:FireServer(
+                        v
+                    )
+
+                    RequestScrapItem:InvokeServer(
+                        CraftingBench,
+                        v
+                    )
+
+                end
+            end
+        end
+    end
+end)
+
+local collectedkids = {}
+local autodaystep = 1
+task.spawn(function()
+    while true do wait(10)
+        if Settings.Dayfarm then
+
+            Window:Notify({
+                Title = "Decide",
+                Description = "Turned every settings off.",
+                Lifetime = 5
+            })
+
+            Settings.AutoCampfire = false
+            Settings.AutoCutTree = false
+            Settings.AutoKillRaid = false
+            Settings.Killaura = false
+            Settings.TreeAura = false
+
+            ReplicatedStorage.RemoteEvents.DamagePlayer:FireServer(-math.huge)
+
+            if autodaystep == 1 then
+                Window:Notify({
+                    Title = "Decide",
+                    Description = "Step 1 Started.",
+                    Lifetime = 5
+                })
+
+                Settings.AutoCampfire = true
+                Settings.AutoCutTree = true
+                Settings.AutoKillRaid = true
+                Settings.TreeAura = true
+                TreesToCut = {["Small Tree"] = true, ["Snowy Small Tree"] = true, ["Small Webbed Tree"] = true}
+
+                EquipItemHandle:FireServer("FireAllClients", lp.Inventory["Old Axe"])
+                local ftarget = Campfire:GetAttribute("FuelTarget")
+                repeat
+                    wait(3)
+                    ftarget = Campfire:GetAttribute("FuelTarget")
+                until ftarget == 3500 and workspace.Map.Campground.MainFire.Center.BillboardGui.Frame.TextLabel.Text == " " or not Settings.Dayfarm
+
+                if ftarget == 3500 and workspace.Map.Campground.MainFire.Center.BillboardGui.Frame.TextLabel.Text == " " then
+                    autodaystep = 2
+                    print("Step 2!")
+                    Window:Notify({
+                        Title = "Decide",
+                        Description = "Step 1 Completed.",
+                        Lifetime = 5
+                    })
+                end
+
+                Settings.AutoCampfire = false
+                Settings.AutoCutTree = false
+                Settings.AutoKillRaid = false
+                Settings.TreeAura = false
+
+            end
+
+            if autodaystep == 2 then
+
+                Window:Notify({
+                    Title = "Decide",
+                    Description = "Turned every settings off.",
+                    Lifetime = 5
+                })
+
+                Settings.AutoCampfire = false
+                Settings.AutoCutTree = false
+                Settings.AutoKillRaid = false
+                Settings.Killaura = false
+                Settings.TreeAura = false
+                
+                Window:Notify({
+                    Title = "Decide",
+                    Description = "Step 2 Started.",
+                    Lifetime = 5
+                })
+
+                wait(5)
+
+                for i,v in pairs(workspace.Map.MissingKids:GetAttributes()) do
+                    rwait(CFrame.new(v))
+                end
+
+                for i,v in pairs(workspace.Characters:GetChildren()) do
+                    if v and v.PrimaryPart and char and char.PrimaryPart then
+                        if v.Name == "Lost Child" or v.Name == "Lost Child2" or v.Name == "Lost Child3" or v.Name == "Lost Child4" and table.find(collectedkids, v.Name) == nil then
+                            rwait(v.PrimaryPart.CFrame)
+                            wait(0.1)
+                            table.insert(collectedkids, v.Name)
+                            fireproximityprompt(v.Head.ProximityAttachment.ProximityInteraction)
+                        end
+                    end
+                end
+
+                wait(5)
+
+                char.PrimaryPart.CFrame = CFrame.new(Campfire.PrimaryPart.Position + Vector3.new(0, 20, 0), Vector3.new(0,0,0))
+
+                wait(2)
+
+                local Sack = lp.Inventory["Old Sack"]
+                local Item = lp.ItemBag:GetChildren()[1]
+
+                RequestBagDropItem:FireServer(
+                    Sack,
+                    Item,
+                    true
+                )
+
+                Window:Notify({
+                    Title = "Decide",
+                    Description = "Saved "..tostring(#collectedkids).." kids.",
+                    Lifetime = 5
+                })
+
+                Window:Notify({
+                    Title = "Decide",
+                    Description = "Cutting woods for 60s",
+                    Lifetime = 5
+                })
+
+                Settings.AutoCampfire = false
+                Settings.AutoCutTree = true
+                Settings.AutoKillRaid = false
+                Settings.TreeAura = true
+                TreesToCut = {["Small Tree"] = true, ["Snowy Small Tree"] = true, ["Small Webbed Tree"] = true}
+
+                wait(60)
+                
+                Settings.AutoCampfire = false
+                Settings.AutoCutTree = false
+                Settings.AutoKillRaid = false
+                Settings.TreeAura = false
+
+                rwait(CFrame.new(Campfire.PrimaryPart.Position + Vector3.new(0, 20, 0), Vector3.new(0,0,0)))
+
+
+                Window:Notify({
+                    Title = "Decide",
+                    Description = "Salvaging scraps",
+                    Lifetime = 5
+                })
+
+                Settings.ConvertScrap = true
+
+                wait(10)
+
+                Settings.ConvertScrap = false
+
+                Window:Notify({
+                    Title = "Decide",
+                    Description = "Crafting bed",
+                    Lifetime = 5
+                })
+
+                CraftItem:InvokeServer("Old Bed")
+                wait(1)
+                CraftItem:InvokeServer("Crafting Bench 2")
+                wait(1)
+                CraftItem:InvokeServer("Regular Bed")
+                wait(1)
+                CraftItem:InvokeServer("Crafting Bench 3")
+                wait(1)
+                CraftItem:InvokeServer("Good Bed")
+
+                RequestPlaceStructure:InvokeServer(
+                    lp.Inventory["Old Bed Blueprint"],
+                    {
+                        Valid = true,
+                        CFrame = CFrame.new(22, 3, 10, -1, 0, -0, 0, 1, 0, 0, 0, -1),
+                        Position = Vector3.new(22, 1, 10)
+                    },
+                    CFrame.new(0, 0, 0, -1, 0, -0, 0, 1, 0, 0, 0, -1)
+                )
+                RequestPlaceStructure:InvokeServer(
+                    lp.Inventory["Regular Bed Blueprint"],
+                    {
+                        Valid = true,
+                        CFrame = CFrame.new(15, 3, 14, 1, 0, 0, 0, 1, 0, -0, 0, 1),
+                        Position = Vector3.new(15, 1, 14)
+                    },
+                    CFrame.new(0, 0, 0, 1, 0, 0, 0, 1, 0, -0, 0, 1)
+                )
+                RequestPlaceStructure:InvokeServer(
+                    lp.Inventory["Good Bed Blueprint"],
+                    {
+                        Valid = true,
+                        CFrame = CFrame.new(7, 4, 21, -1, 0, -0, 0, 1, 0, 0, 0, -1),
+                        Position = Vector3.new(7, 2, 21)
+                    },
+                    CFrame.new(0, 0, 0, -1, 0, -0, 0, 1, 0, 0, 0, -1)
+                )
+
+                Window:Notify({
+                    Title = "Decide",
+                    Description = "Finished first 2 steps. Now Step 3 : Infinite",
+                    Lifetime = 5
+                })
+
+                autodaystep = 3
+            end
+
+            if autodaystep == 3 then
+                Window:Notify({
+                    Title = "Decide",
+                    Description = "Just afk.",
+                    Lifetime = 5
+                })
+            end
+        end
+    end
+end)
+
+local bb = game:GetService("VirtualUser")
+game.Players.LocalPlayer.Idled:Connect(function()
+    bb:CaptureController()
+    bb:ClickButton2(Vector2.new(9e9, 9e9))
+end)
